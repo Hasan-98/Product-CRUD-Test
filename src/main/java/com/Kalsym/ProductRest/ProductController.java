@@ -32,7 +32,6 @@ public class ProductController {
 //    public List<Product> list() {
 //        return service.listAll();
 //    }
-
     @GetMapping("/products/{id}")
     public ResponseEntity<Product> get(@PathVariable int id) {
         try {
@@ -49,6 +48,11 @@ public class ProductController {
         return product;
 
     }
+//    @PostMapping("/products")
+//    public Response addProduct(@RequestBody Product product) {
+//        service.save(product);
+//        return new Response(product.getId() + " inserted", Boolean.TRUE);
+//    }
 
     @PutMapping("/products/{id}")
     public ResponseEntity<Product> update(@RequestBody Product product, @PathVariable int id) {

@@ -4,85 +4,94 @@
  */
 package com.Kalsym.ProductRest;
 
-import java.util.List;
-import org.assertj.core.api.Assertions;
+import static org.junit.jupiter.api.Assertions.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.context.WebApplicationContext;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
-import org.springframework.test.annotation.Rollback;
-import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.event.annotation.BeforeTestMethod;
+import org.springframework.test.context.web.WebAppConfiguration;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 /**
  *
  * @author Kalsym
  */
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = Replace.NONE)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@WebMvcTest(ProductController.class)
+@WebAppConfiguration
+@ContextConfiguration
 public class ProductTest {
 
     @Autowired
-    private ProductRepository repository;
+    private MockMvc mockMvc;
 
-    @Test
-    @Rollback(false)
-    @Order(1)
-    public void testCreateProduct() {
-        Product product = new Product("iphone", 800);
-        Product saveProduct = repository.save(product);
-        assertNotNull(saveProduct);
+    @Autowired
+    public WebApplicationContext webApplicationContext;
 
-    }
+    private static ObjectMapper mapper = new ObjectMapper();
 
-    @Test
-    @Order(2)
-    public void testFindProductByName() {
-        String name = "iphone";
-        Product product = repository.findByName(name);
-        Assertions.assertThat(product.getName()).isEqualTo(name);
-    }
+    @MockBean
+    ProductService productService;
 
-    @Test
-    @Rollback(false)
-    @Order(3)
-    public void testUpdateProduct() {
-        String productName = "samsung";
-        Product product = new Product(productName, 500);
-        product.setId(1);
-        repository.save(product);
-
-        Product updatedProduct = repository.findByName(productName);
-        Assertions.assertThat(updatedProduct.getName()).isEqualTo(productName);
-    }
-
-    @Test
-    @Order(4)
-    public void testListProducts() {
-        List<Product> products = (List<Product>) repository.findAll();
-        for (Product product : products) {
-            System.out.println(product);
-        }
-
-        Assertions.assertThat(products).size().isGreaterThan(0);
+    @BeforeTestMethod
+    public void setUp() {
 
     }
 
     @Test
-    @Order(5)
-    public void testDeleteProduct() {
-        Integer id = 1;
-        boolean isPresentBeforeDelete = repository.findById(id).isPresent();
+    public void addProductTest() throws Exception {
+        Product p = new Product("Keyboard", 300);
+        String jsonRequest = mapper.writeValueAsString(p);
 
-        repository.deleteById(id);
-
-        boolean isPresentAfterDelete = repository.findById(id).isPresent();
-        //   assertTrue(isPresentBeforeDelete);
-        assertFalse(isPresentAfterDelete);
-
+        mockMvc.perform(post("/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonRequest))
+                .andExpect(status().isOk());
     }
+
+    @Test
+    public void getProductTest() throws Exception {
+        Product p = new Product("Keyboard", 300);
+        String jsonRequest = mapper.writeValueAsString(p);
+
+        mockMvc.perform(get("/products/{id}", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonRequest))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void deleteProductTest() throws Exception {
+        Product p = new Product("Keyboard", 300);
+
+        String jsonRequest = mapper.writeValueAsString(p);
+
+        mockMvc.perform(delete("/products/{id}", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonRequest))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void postProductTest() throws Exception {
+        Product p = new Product("Mouse", 300);
+        String jsonRequest = mapper.writeValueAsString(p);
+
+        mockMvc.perform(put("/products/{id}", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonRequest))
+                .andExpect(status().isOk());
+    }
+
 }
